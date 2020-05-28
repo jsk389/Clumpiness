@@ -5,6 +5,9 @@ import scipy
 
 from xgboost import XGBModel
 
+# This is all based on code from
+#https://github.com/gpleiss/temperature_scaling/blob/master/temperature_scaling.py
+
 class ModelwithTemperature:
     """
     Want to wrap xgboost model with temperature scaling model
