@@ -106,21 +106,7 @@ class Dataset(object):
             #plt.plot(self.time, self.flux)
 
             self.k2_data_prep()
-            #plt.plot(self.time, self.flux)
-            #plt.show()
-        # For running full K2 stuff
-        #elif (self.fname.endswith(".fits")) and ("hlsp_everest_k2" in self.fname):
-            # If dealing with everest lightcurves then need to do a little more preprocessing
-        #    dat = Table.read(tar.extractfile(self.fname), hdu=1, format='fits')
-        #    tar.close()
-        #    df = dat.to_pandas()
-        #    self.time = df['TIME'].values
-        #    self.flux = df['FCOR'].values
-        #    # Convert to relative flux for lightkurve
-        #    self.flux /= np.nanmedian(self.flux)
-        #    #plt.plot(self.time, self.flux)
-        #    #plt.show()
-        #    self.k2_data_prep()
+
         elif 'COR_filt_inp' in self.fname:
             hdu = fits.open(self.fname)
             self.time = hdu[0].data[:,0]
@@ -133,18 +119,16 @@ class Dataset(object):
             lc = lk.LightCurve(time=self.time, flux=1+(self.flux/1e6)).remove_nans()
             # Rafa's data only filtered with 80 days, so filter with 20 days for consistency
             lc = lc.flatten(window_length=(48*20)+1).remove_outliers(sigma=4) 
-            #print(lc.flux)
-            #print(np.mean(lc.flux), np.min(lc.flux), np.max(lc.flux))
-            #self.flux = (lc.flux -1) * 1e6
+
             
             self.flux = (lc.flux - 1) * 1e6
             self.time = lc.time            
 
 
         elif self.fname.endswith(".fits"):
-            #print("FNAME: ", self.fname)
+
             dat = Table.read(self.fname, format='fits')
-            #print(dat)
+
             df = dat.to_pandas()
             if 'ktwo' in self.fname:
                 self.time = df['TIME'][df['SAP_QUALITY'] == 0].values
@@ -157,7 +141,7 @@ class Dataset(object):
             else:
                 self.time = df['TIME'].values
                 self.flux = df['FLUX'].values
-                #self.k2_data_prep()
+
         # If doesn't end with .fits assume that it is in ascii format, since
         # ascii can have many different endings, e.g. .pow, .txt etc.
         else:
@@ -186,13 +170,7 @@ class Dataset(object):
         idx = np.where(np.diff(self.time) > 20*86400.0)[0]
 #        print(idx)
         if len(idx) > 0:
-#            plt.plot(self.time, self.flux)
-#            for i in range(len(idx)):
-#                plt.axvline(self.time[idx[i]], color='r', linestyle='--')
-#                plt.axvline(self.time[idx[i]+1], color='r', linestyle='--')
-#
-#            plt.show()
-#            print(len(self.time))
+
             for i in range(len(idx)):
                 self.time[idx[i]+1:] -= (self.time[idx[i]+1] - self.time[idx[i]])
             self.flux = self.flux[np.isfinite(self.time)]
@@ -200,20 +178,7 @@ class Dataset(object):
             self.time = self.time[np.isfinite(self.flux)]
             self.flux = self.flux[np.isfinite(self.flux)]
 
-#            print(len(self.time))
-#            plt.plot(self.time, self.flux)
-            #for i in range(len(idx)):
-        #        plt.axvline(self.time[idx[i]], color='r', linestyle='--')
-        #        plt.axvline(self.time[idx[i]+1], color='r', linestyle='--')
-#
-#            plt.show()
-
-
-        # TODO: REMOVE THIS BIT!
-        #self.flux[self.flux != 0] = np.random.normal(0, 1, len(self.flux[self.flux != 0]))
-
         if self.ndays != -1:
-            #print(np.nanmax(self.time)/ (self.ndays*86400.0))
             self.n_sections = int(np.ceil((np.nanmax(self.time) / 86400.0) / self.ndays))
             if self.n_sections < 1:
                 self.n_sections = 1
@@ -234,24 +199,11 @@ class Dataset(object):
             for i in range(len(self.new_flux)):
                 if (not self.new_flux[i].any()) or (len(self.new_flux[i][self.new_flux[i] != 0])/len(self.new_flux[i]) < 0.1):
                     idx.append(int(i))
-            #print("S: ", len(self.new_flux))
-
+           
             if len(idx) > 0:
                 for i in sorted(idx, reverse=True):
                     del self.new_time[i]
                     del self.new_flux[i]
-
-        #print(np.shape(self.time), np.shape(self.flux))
-        #plt.plot(self.time, self.flux)
-        #plt.show()
-
-        # If only want one section then proceed as normal
-        #if ndays != -1:
-        #if n_sections != 1:
-            # Convert number of days into seconds
-        #    ntime = ndays * n_sections * 86400.0
-        #    self.flux = self.flux[self.time <= ntime]
-        #    self.time = self.time[self.time <= ntime]
 
         if noise != 0.0:
             self.flux[self.flux != 0] += np.random.normal(0, noise)
@@ -282,8 +234,8 @@ class Dataset(object):
 
     def power_spectrum(self, time, flux, df=None):
 
-        t = time[np.isfinite(flux)]# self.time[np.isfinite(self.flux)]
-        f = flux[np.isfinite(flux)]#self.flux[np.isfinite(self.flux)]
+        t = time[np.isfinite(flux)]
+        f = flux[np.isfinite(flux)]
 
         t -= t[0]
         if t[1] < 1:
@@ -328,9 +280,8 @@ class Dataset(object):
         keyword regular: if True then puts onto regularly sampled grid
         """
         # Cadence in seconds!
-        dt = (29.4 * 60.0)# / 86400.0
+        dt = (29.4 * 60.0)
         # Interpolation function
-        #print("LENGTH BEFORE: ", len(self.time))
         mask = np.isfinite(self.time)
         if regular:
             f = interp.interp1d(self.time[mask], self.flux[mask], kind='linear', bounds_error=False)
@@ -343,36 +294,19 @@ class Dataset(object):
             self.new_time = np.arange(np.nanmin(self.time),
                                       np.nanmax(self.time),
                                       dt)
-            #else:
-                # Data stars from zero so will hardcode this for the time being!
-            #    self.new_time = np.arange(0,
-            #                              self.ndays * 86400.0,
-            #                              dt)
 
-            # Hard code for time being
-            #if len(self.new_time) < 1323:
-            #    self.new_time = np.arange(np.nanmin(self.time),
-            #                              np.nanmin(self.time) + 1323*dt,
-            #                              dt)
             # New flux array
             self.new_flux = f(self.new_time)
             # Zero centre first!
-            #self.new_flux[~np.isfinite(self.new_flux)] -= np.mean(self.new_flux[~np.isfinite(self.new_flux)])
             self.new_flux[np.isfinite(self.new_flux)] -= np.mean(self.new_flux[np.isfinite(self.new_flux)])
             self.new_flux[~np.isfinite(self.new_flux)] = 0
         else:
-            #pass
             self.new_flux = self.flux.copy()
             self.new_time = self.time.copy()
-            #plt.plot(self.new_time, self.new_flux, color='C0')
 
             self.new_flux[np.isfinite(self.flux)] -= np.mean(self.new_flux[np.isfinite(self.flux)])
             self.new_flux[~np.isfinite(self.flux)] = 0
 
-            #plt.plot(self.new_time, self.new_flux, color='C2')
-            #plt.show()
-
-        #plt.plot(self.time, self.flux, 'k')
         # Allow for slight irregular sampling and work out where gap begins
         times = np.where(np.diff(self.time[mask]) > 1800)
         for i in range(len(times[0])):
@@ -386,30 +320,17 @@ class Dataset(object):
         # using these data!
         if self.n_sections != 1:
             n_points = int(self.ndays/ (29.4 / (60.0 * 24)))
-            #print(n_points)
-            #print(np.shape(self.time))
+
             self.new_time = []
             self.new_flux = []
             dtau = (self.ndays * 86400.0)
-            #print(dtau)
-            #self.new_time = np.append(self.new_time, self.time[)])
+
             for i in range(self.n_sections):
                 self.new_time.append(self.time[(self.time >= (i*dtau)) * (self.time <= i*dtau + dtau)])
                 self.new_flux.append(self.flux[(self.time >= (i*dtau)) * (self.time <= i*dtau + dtau)])
-            #if self.n_sections == 1:
-            #    print(self.new_time)
+
             self.new_time = np.array(self.new_time)
             self.new_flux = np.array(self.new_flux)
-            #for i in range(self.n_sections):
-            #    print(len(self.new_time[i]), len(self.new_flux[i]))
-            #print(self.new_time)
-            #sys.exit()
-
-            #sys.exit()
-            #self.new_time = np.array_split(self.new_time, self.n_sections)
-            #self.new_flux = np.array_split(self.new_flux, self.n_sections)
-            #self.new_time = np.array(self.new_time)
-            #self.new_flux = np.array(self.new_flux)
 
             # If last section is too small then disregard
             # Take threshold as 3/4 * ideal length, that way it is close enough
@@ -422,54 +343,17 @@ class Dataset(object):
             for i in range(len(self.new_flux)):
                 if (not self.new_flux[i].any()) or (len(self.new_flux[i][self.new_flux[i] != 0])/len(self.new_flux[i]) < 0.1):
                     idx.append(int(i))
-            #print("S: ", len(self.new_flux))
 
             if len(idx) > 0:
-                #print(len(idx))
-                #plt.figure(1)
-                #plt.plot(self.time, self.flux)
 
-
-                #idx = idx.astype(int)
-                #print(idx)
-                #print(len(self.new_time))
-                #print("T: ", len(self.new_time))
                 for i in sorted(idx, reverse=True):
                     del self.new_time[i]
                     del self.new_flux[i]
-                #self.new_time = np.delete(self.new_time, idx)
-                #self.new_flux = np.delete(self.new_flux, idx)
-                #plt.figure(2)
-                #for i in range(len(self.new_time)):
-                #    plt.plot(self.new_time[i], self.new_flux[i])
-                #print("X: ", len(self.new_time))
-                #plt.show()
-            #TODO: K2 detrending
-#            for i in range(len(self.new_flux)):
-#                self.new_time[i] = self.new_time[i][np.isfinite(self.new_flux[i])]
-#                self.new_flux[i] = self.new_flux[i][np.isfinite(self.new_flux[i])]
-#                #self.time = self.time[:len(self.time)//2]
-#                #self.flux = self.flux[:len(self.flux)//2]
-#                self.new_flux[i] = (self.new_flux[i] / 1e6) + 1
-#
-#                med = self.med_filt(self.new_time[i], self.new_flux[i], dt=2.0*86400.0)
-#                #plt.plot(self.time, self.flux)
-#                #plt.plot(self.time, med)
-#                #plt.show()
-#
-#                self.new_flux[i] = 1e6 * ((self.new_flux[i] / med) - 1.0)
-#
-#                clip = 5.0
-#                self.new_time[i] = self.new_time[i][np.abs(self.new_flux[i]) < clip * np.std(self.new_flux[i])]
-#                self.new_flux[i] = self.new_flux[i][np.abs(self.new_flux[i]) < clip * np.std(self.new_flux[i])]
-#                self.new_time[i] = self.new_time[i][np.abs(self.new_flux[i]) < clip * np.std(self.new_flux[i])]
-#                self.new_flux[i] = self.new_flux[i][np.abs(self.new_flux[i]) < clip * np.std(self.new_flux[i])]
+
 
             if self.ndays != -1:
                 # Remove linear trend from chunks
                 # In case only one section remains
-                #if len(self.new_flux) > 100:
-                #    self.new_flux = [self.new_flux]
                 """
                 Add in new part where we properly detrend the data according to length of time observed!
                 """
@@ -504,11 +388,10 @@ class Dataset(object):
                         elif self.ndays == 27:
                             # Currently hardcoded according to Kepler long-cadence!!!
                             lc = lc.flatten(window_length=(48*3)+1)
-                        #plt.plot(self.new_time[i], self.new_flux[i])
+
                         self.new_flux[i] = (lc.flux-1)*1e6
                         self.new_time[i] = lc.time
-                        #plt.plot(lc.time, self.new_flux[i])
-                        #plt.show()
+
                         trend = np.poly1d(np.polyfit(self.new_time[i][self.new_flux[i] != 0], self.new_flux[i][self.new_flux[i] != 0], 1))
                         self.new_flux[i][self.new_flux[i] != 0] -= trend(self.new_time[i][self.new_flux[i] != 0])
 
@@ -516,7 +399,6 @@ class Dataset(object):
             if self.ndays == 27:
                 # Remove linear trend from data
                 trend = self.compute_trend(self.new_time[self.new_flux != 0], self.new_flux[self.new_flux != 0])
-                #trend = np.poly1d(np.polyfit(self.new_time[i][self.new_flux[i] != 0], self.new_flux[i][self.new_flux[i] != 0], 1))
                 self.new_flux[self.new_flux != 0] -= trend
             else:
                 pass

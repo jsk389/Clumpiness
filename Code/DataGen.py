@@ -63,16 +63,11 @@ class DataGen(object):
             m = (data["SAP_QUALITY"] == 0) & np.isfinite(x0) & np.isfinite(y0)
             mu = np.median(y0[m])
             y0 = (y0[m] / mu - 1.0) * 1e6
-            #dt = np.diff(x0)
+
             self.flux = np.append(self.flux, y0)
             self.time = np.append(self.time, x0[m])
             self.ferr = np.append(self.ferr, 1e6 * data["PDCSAP_FLUX_ERR"][m] / mu)
-            #self.time = np.concatenate(self.time)
-            #self.flux = np.concatenate(self.flux)
-            #self.ferr = np.concatenate(self.ferr)
-            #print(len(x0), np.sum(np.isfinite(x0)))
 
-        #plt.errorbar(self.time, self.flux, yerr=self.ferr, fmt='.')
         print("SIGMA CLIPPING")
         self.time, self.flux, self.ferr = self.sigma_clipping(self.time,
                                                               self.flux,
@@ -84,14 +79,11 @@ class DataGen(object):
         print("Done")
         idx = np.isfinite(self.flux)
         self.flux[idx] -= mm[idx]
-        #plt.errorbar((self.time-self.time[0])*86400.0, self.flux, yerr=self.ferr, fmt='.', zorder=-1)
-        #plt.plot(self.time, mm, zorder=10)
-        #plt.show()
 
 
     def med_filt(self, x, y, dt=4.):
         """
-        De-trend a light curve using a windowed median.
+        De-trend a light curve using a windowed median in time.
         """
         x, y = np.atleast_1d(x), np.atleast_1d(y)
         assert len(x) == len(y)
@@ -112,9 +104,6 @@ class DataGen(object):
         #print(len(t), len(f), len(ferr))
         for i in range(n_rounds):
             idx = np.isfinite(f)
-            #print((sigma * self.std_from_mad(f[idx] - 1)))
-            #print(len(t), len(f), len(ferr))
-            #print(len((abs(f - 1) < (sigma * self.std_from_mad(f[idx] - 1)))))
             t = t[(abs(f - 1) < (sigma * self.std_from_mad(f[idx] - 1)))]
             ferr = ferr[(abs(f - 1) < (sigma * self.std_from_mad(f[idx] - 1)))]
             f = f[(abs(f - 1) < (sigma * self.std_from_mad(f[idx] - 1)))]
@@ -174,7 +163,6 @@ class DataGen(object):
             for i in range(len(self.new_flux)):
                 if (not self.new_flux[i].any()) or (len(self.new_flux[i][self.new_flux[i] != 0])/len(self.new_flux[i]) < 0.1):
                     idx.append(int(i))
-            #print("S: ", len(self.new_flux))
 
             if len(idx) > 0:
                 for i in sorted(idx, reverse=True):
@@ -190,22 +178,7 @@ class DataGen(object):
 
         # Perturb if not chunked
         if chunk == False and perturb == True:
-            self.new_flux = self.flux.copy()# + np.random.normal(0, self.ferr)
-        # If only want one section then proceed as normal
-        #if ndays != -1:
-        #if n_sections != 1:
-            # Convert number of days into seconds
-        #    ntime = ndays * n_sections * 86400.0
-        #    self.flux = self.flux[self.time <= ntime]
-        #    self.time = self.time[self.time <= ntime]
-    #    if chunk == True:
-    #        print(len(self.new_time), len(self.new_flux), len(self.new_ferr))
-    #        plt.plot(self.new_time, self.new_flux, '.')
-    #        plt.show()
-        #else:
-            #plt.plot(self.time, self.flux, '.')
-            #plt.show()
-
+            self.new_flux = self.flux.copy()
 
 
         if noise != 0.0:
@@ -240,8 +213,6 @@ class DataGen(object):
         #print("LENGTH BEFORE: ", len(self.time))
         mask = np.isfinite(self.time)
         f = interp.interp1d(self.time[mask], self.flux[mask], kind='linear', bounds_error=False)
-        # New time array
-        #print(np.sum(np.isfinite(self.time)), len(self.time), np.nanmin(self.time), np.nanmax(self.time), dt)
         # Removed max time as nanmax and min time as nanmin and will go from 0 to 4 years to ensure proper limits
         # NOPE the above comment is wrong - only want to put onto regular grid between where there is and isn't data
         # Otherwise will artificially decrease fill massively!
@@ -255,7 +226,6 @@ class DataGen(object):
         self.new_flux[~np.isfinite(self.new_flux)] -= np.mean(self.new_flux[~np.isfinite(self.new_flux)])
         self.new_flux[~np.isfinite(self.new_flux)] = 0
 
-        #plt.plot(self.time, self.flux, 'k')
         # Allow for slight irregular sampling and work out where gap begins
         times = np.where(np.diff(self.time[mask]) > 1800)
         for i in range(len(times[0])):
@@ -267,14 +237,10 @@ class DataGen(object):
         # Need to think about this more carefully! As features won't end up
         # using these data!
 
-        #print("SECTIONS: ", self.n_sections)
         if self.n_sections != 1:
-            #print("SAFE")
             self.new_time = np.array_split(self.new_time, self.n_sections)
             self.new_flux = np.array_split(self.new_flux, self.n_sections)
-            #self.new_time = np.array(self.new_time)
-            #self.new_flux = np.array(self.new_flux)
-
+            
             # If last section is too small then disregard
             # Take threshold as 3/4 * ideal length, that way it is close enough
             # to the ideal length
@@ -286,28 +252,12 @@ class DataGen(object):
             for i in range(len(self.new_flux)):
                 if (not self.new_flux[i].any()) or (len(self.new_flux[i][self.new_flux[i] != 0])/len(self.new_flux[i]) < 0.1):
                     idx.append(int(i))
-            #print("S: ", len(self.new_flux))
 
             if len(idx) > 0:
-                #print(len(idx))
-                #plt.figure(1)
-                #plt.plot(self.time, self.flux)
-
-
-                #idx = idx.astype(int)
-                #print(idx)
-                #print(len(self.new_time))
-                #print("T: ", len(self.new_time))
+                
                 for i in sorted(idx, reverse=True):
                     del self.new_time[i]
                     del self.new_flux[i]
-                #self.new_time = np.delete(self.new_time, idx)
-                #self.new_flux = np.delete(self.new_flux, idx)
-                #plt.figure(2)
-                #for i in range(len(self.new_time)):
-                #    plt.plot(self.new_time[i], self.new_flux[i])
-                #print("X: ", len(self.new_time))
-                #plt.show()
 
             if self.ndays != -1:
                 # Remove linear trend from chunks
@@ -316,8 +266,6 @@ class DataGen(object):
                     self.new_flux = [self.new_flux]
                 for i in range(len(self.new_flux)):
                     # Remove linear trend from data
-                    #trend = self.compute_trend(self.new_time[i][self.new_flux[i] != 0], self.new_flux[i][self.new_flux[i] != 0])
-                    #self.new_flux[i][self.new_flux[i] != 0] -= trend
                     trend = np.poly1d(np.polyfit(self.new_time[i][self.new_flux[i] != 0], self.new_flux[i][self.new_flux[i] != 0], 1))
                     self.new_flux[i][self.new_flux[i] != 0] -= trend(self.new_time[i][self.new_flux[i] != 0])
         else:
