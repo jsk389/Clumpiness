@@ -1,0 +1,2 @@
+ID,distance,distance_error,astrometric_chi2_al,astrometric_n_good_obs_al,astrometric_excess_noise,Kmag,bp_rp,numax,phot_g_mean_mag,metric,ra,dec
+1377591,31.6492503682228,0,83939.5,235,1.8296042010392468,0.6709999999999999,1.3736441000000001,nan,2.8470976,True,231.23232272646015,58.96614029193247
