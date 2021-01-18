@@ -27,7 +27,8 @@ warnings.filterwarnings("ignore")
 from astropy.units import cds
 cds.enable()
 
-bayes = mwdust.Green15(filter='2MASS Ks')
+#bayes = mwdust.Green15(filter='2MASS Ks')
+bayes = mwdust.Combined19(filter="2MASS Ks")
 
 class Features(Template):
     """
@@ -78,7 +79,8 @@ class Features(Template):
         :param y: array of which to calculate the fill.
         :type y: array
         """
-        full_npts = (x[-1] - x[0]) / self.ds.dt #(29.4*60.0)
+        # 11/01/2021 Make sure to round up to avoid odd case where fill can be greater than 1
+        full_npts = np.ceil((x[-1] - x[0]) / self.ds.dt) #(29.4*60.0)
         return len(y[np.isfinite(y)]) / full_npts
 
 
@@ -91,13 +93,13 @@ class Features(Template):
         """
         # Compute fill and check if multiple chunks of data to loop over
         if self.chunks == 1:
-            full_npts = (self.ds.new_time[-1] - self.ds.new_time[0]) / self.ds.dt #(29.4 * 60.0)
+            full_npts = np.ceil((self.ds.new_time[-1] - self.ds.new_time[0]) / self.ds.dt) #(29.4 * 60.0)
             return len(self.ds.new_time[np.isfinite(self.ds.new_flux)]) / full_npts
             #return len(self.ds.new_flux[self.ds.new_flux != 0]) / len(self.ds.new_flux)
         else:
             fill = np.zeros(self.chunks)
             for i in range(self.chunks):
-                full_npts = (self.ds.new_time[i][-1] - self.ds.new_time[i][0]) / self.ds.dt #(29.4*60.0)
+                full_npts = np.ceil((self.ds.new_time[i][-1] - self.ds.new_time[i][0]) / self.ds.dt) #(29.4*60.0)
                 fill[i] = len(self.ds.new_time[i][np.isfinite(self.ds.new_flux[i])]) / full_npts
                 #fill[i] = len(self.ds.new_flux[i][self.ds.new_flux[i] != 0]) / len(self.ds.new_flux[i])
             return fill
@@ -256,6 +258,8 @@ class Features(Template):
             c_icrs = SkyCoord(ra=ra*u.degree, dec=dec*u.degree, distance=distance*u.pc, frame='icrs')
             l = c_icrs.galactic.l.value
             b = c_icrs.galactic.b.value
+
+            #print(l, b)
 
             #ebv = bayes(l, b, distance)
             # Distance needs to be in kpc NOT pc!

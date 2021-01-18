@@ -83,8 +83,18 @@ class Dataset(object):
         else:
             self.dt = dt
 
+        # 11/01/2021 Hacky solution for some TESS CVZ targets
+        if (self.fname.endswith("inp.fits")) and ("TIC" in self.fname):
+            data = fits.open(self.fname)[0].data
+            self.time = data[:,0]
+            self.flux = data[:,1]
+            # Remove zeros (as gaps zero-padded)
+            self.time = self.time[self.flux != 0.0]
+            self.flux = self.flux[self.flux != 0.0]
+            #
+
         # Assess which file format the data is in
-        if (self.fname.endswith(".fits")) and ("hlsp_everest_k2" in self.fname):
+        elif (self.fname.endswith(".fits")) and ("hlsp_everest_k2" in self.fname):
             # If dealing with everest lightcurves then need to do a little more preprocessing
             dat = Table.read(self.fname, hdu=1, format='fits')
             df = dat.to_pandas()
@@ -211,7 +221,7 @@ class Dataset(object):
 
 
 
-    def to_regular_sampling(self, regular=False):
+    def processing(self, regular=False):
         """
         Does time series preparation and chunking. If regular is set to True then will
         also interpolate onto regular frid in time, but defaults to False.

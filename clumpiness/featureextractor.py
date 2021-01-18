@@ -90,7 +90,7 @@ class FeatureExtractor:
             star.read_timeseries(ndays=self.NDAYS, tar=tar)
 
             # Put into regular sampling
-            star.to_regular_sampling()
+            star.processing()
 
 
         else:
@@ -105,7 +105,7 @@ class FeatureExtractor:
             star.read_timeseries(ndays=self.NDAYS)
 
             # Put into regular sampling
-            star.to_regular_sampling()
+            star.processing()
 
         
         prior_info = self.prior_df.loc[self.prior_df[self.pipeline['star_id']] == kicid,]
