@@ -271,7 +271,7 @@ class Features(Template):
             #Ak = 0.355*ebv
             #except:
             #    Ak = [0]
-            return np.asscalar(Ak), distance
+            return np.ndarray.item(Ak), distance
         else:
             Ak = np.zeros(self.chunks)
             new_distance = np.zeros(self.chunks)
