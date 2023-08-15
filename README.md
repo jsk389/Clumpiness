@@ -22,3 +22,8 @@ The data contained in points 1 and 2 make up the "meta-data" for each star, used
 The data input (reading) part of `Clumpiness` is not implemented as well as it could (or perhaps should) be and the way in which the data is handled depends on the name of the file (generally due to different groups formatting the data in different ways) and no standardised way has yet been implemented. So it is worth checking the computed features for a few stars to make sure they make sense. For example, the variances are computed assuming the data is in units of ppm.
 
 Once this data has been retrieved the application of `Clumpiness` is surprisingly simple.
+
+How to install ?
+================
+1. clone the repository
+2. `cd` into the folder and run `python setup.py install` to install the package.
